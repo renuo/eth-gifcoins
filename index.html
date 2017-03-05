@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Renuo Gifcoins</h1>
+      <p>You have <strong id="myGivables">?</strong> coins to give away.</p>
+
+      <h2>Give a Coin</h2>
+      <div class="form-group">
+        <label for="targetAddress">Target address</label>
+        <input type="text" class="form-control" id="targetAddress" placeholder="Target address" value="0x9b65Af68930b4815363389AeEAfBb08e3595C343">
+      </div>
+
+      <div class="form-group">
+        <label for="coinMessage">Message</label>
+        <input type="email" class="form-control" id="coinMessage" placeholder="You did well!">
+      </div>
+
+      <div class="form-group">
+        <button class="btn btn-primary" id="giveCoin" onclick="giveCoin()">Give Coin!</button>
+      </div>
+
+      <p id='wait'></p>
+      <pre id='log' class="hidden"></pre>
+
+      <h2>Your Coins</h2>
+      <p>You got <strong id="myCoinAmount">?</strong> coins until now!</p>
+      <ul id="myCoinMessages"></ul>
+    </div>
+
+<script type="text/javascript">
+var contractspec = web3.eth.contract(
+  [{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"people","outputs":[{"name":"budget","type":"uint256"},{"name":"budget_reset_at","type":"uint256"},{"name":"coin_amount","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"index","type":"uint256"}],"name":"coin_message","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_message","type":"string"}],"name":"give","outputs":[],"payable":false,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"}]
+);
+
+// TODO provide select box with your own addresses (this one is mine on the testnet)
+var sourceAddress = "0x94C06F1A3F3221E4c3cEAaCc61Db5642e0A729Bc";
+var contractAddress = "0x62b09ee1b3a9170827dd0f79c7cc4e9c9badb9d4";
+var gifcoin = contractspec.at(contractAddress);
+
+function myPerson() {
+  var myAddress = sourceAddress;
+
+  gifcoin.people(myAddress, {
+    from: sourceAddress,
+  }, function (error, txHash) {
+    tryTillResponse(txHash, function (error, receipt) {
+      var budget = txHash[0];
+      var coinAmount = txHash[2];
+
+      document.getElementById('myGivables').innerHTML = budget;
+      document.getElementById('myCoinAmount').innerHTML = coinAmount;
+
+      for(var i=0; i<coinAmount; i++) { myCoinMessage(i); }
+    });
+  });
+}
+
+function myCoinMessage(index) {
+  var myAddress = sourceAddress;
+
+  gifcoin.coin_message(index, {
+    from: sourceAddress,
+  }, function (error, txHash) {
+    tryTillResponse(txHash, function (error, receipt) {
+      var li = document.createElement("li");
+      li.innerHTML = txHash;
+      document.getElementById('myCoinMessages').appendChild(li);
+    });
+  });
+}
+
+function giveCoin() {
+  var targetAddress = document.getElementById('targetAddress').value;
+  var coinMessage = document.getElementById('coinMessage').value;
+
+  gifcoin.give(targetAddress, coinMessage, {
+    from: sourceAddress,
+  }, function (error, txHash) {
+    tryTillResponse(txHash, function (error, receipt) { alert('done ' + txHash); });
+  });
+}
+
+function tryTillResponse (txhash, done) {
+    document.getElementById('wait').innerHTML = 'waiting for the transaction to be mined ...'
+    web3.eth.getTransactionReceipt(txhash, function (err, result) {
+        if (!err && !result) {
+            // Try again with a bit of delay
+            setTimeout(function () { tryTillResponse(txhash, done) }, 500)
+        } else {
+            document.getElementById('wait').innerHTML = ''
+            var log = document.createElement("div");
+            log.innerHTML = JSON.stringify(result);
+            document.getElementById('log').appendChild(log);
+            done(err, result);
+        }
+    })
+}
+
+myPerson();
+</script>
+
+  </body>
+</html>
+
