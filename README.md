@@ -6,4 +6,6 @@ with a smart contract.
 If you call https://renuo.github.io/eth-gifcoins/ in [Mist](https://github.com/ethereum/mist) you get 10 tokens every month 
 to be transferred into coins when you send someone a message.
 
+<img src="./mist.png" width="500">
+
 Read more about it [here](https://coredump-ch.gitbooks.io/ethereum-hacking-day/content/).
